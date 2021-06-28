@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dashboard</title>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script
+      crossorigin
+      src="https://unpkg.com/react@16/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/babel-standalone@6.26.0/babel.js"
+    ></script>
+    <!--- Axios Prackage-->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    
+    <!-- BootStrap-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <!--- chart -->
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  </script>
+  <!-- For Download Fucntionality -->
+  <script src="js/jquery.min.js"></script>
+    <!-- jsPDF library -->  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
+  <script type="text/babel">
+      
+      const rootHandle = document.getElementById("root");
+
+      const {useState,useEffect}=React
+
+      
+       const ListofOrders=(props)=>{
+         const {graphData}=props
+         return(
+              <table className="table">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">No of order</th>
+                        <th scope="col">Count of customer</th>
+                    </tr>
+                </thead>
+                 <tbody>
+                       {
+                         graphData.map((ele,i)=>{
+                           return (
+                              <tr key={i} scope="row">
+                                <td>{i+1}</td>
+                                <td>{ele.orders}</td>
+                                <td>{ele.customer}</td>
+                              </tr>
+                           )
+                         })
+                       } 
+                </tbody>
+             </table>
+         )
+       }
+       
+       const Graph=(props)=>{
+              const { graphData,final_result}=props
+              
+                  
+            
+                      final_result.unshift(['orders','customer'])
+                
+                      google.charts.load('current', {'packages':['corechart']});
+                      google.charts.setOnLoadCallback(drawChart);
+                    
+                      function drawChart(){
+                            var data= google.visualization.arrayToDataTable(final_result)
+                            // Optional; add a title and set the width and height of the chart
+
+                            var options = {'title':'Order Distribution', 'width':700, 'height':400};
+
+                            // Display the chart inside the <div> element with id="piechart"
+                            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+                            chart.draw(data);
+                        }  
+                                const generatePDF=()=>{
+                                  const content=document.getElementById('content') 
+                                   var opt = {
+                                            margin: 1,
+                                            filename: 'myfile.pdf',
+                                            image: { type: 'jpeg', quality: 0.98 },
+                                            html2canvas: { scale: 2 },
+                                            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                                        };
+                                        html2pdf().from(content).set(opt).save();
+                                      }     
+                              
+              return(
+                  <div>
+
+                      <div id="piechart" style={{textAlign:'center', height:'300px',width: '500px'}}></div>
+                    
+                      <button style={{margin:'30px'}} onClick={()=>generatePDF()} className="btn btn-primary">Download</button>
+                      
+                  </div>
+                
+                )
+       }
+       const PaginationComponent=(props)=>{
+             return(
+               <div>
+                <nav aria-label="Page navigation example">
+                                  <ul className="pagination">
+                                    <li className="page-item"><a className="page-link" href="#">Previous</a></li>
+                                    <li className="page-item"><a className="page-link" href="#">1</a></li>
+                                    <li className="page-item"><a className="page-link" href="#">2</a></li>
+                                    <li className="page-item"><a className="page-link" href="#">3</a></li>
+                                    <li className="page-item"><a className="page-link" href="#">Next</a></li>
+                                  </ul>
+                     </nav>
+                 </div>
+             )
+       }
+      const ListingCustomer=(props)=>{
+          const {data,totalCustomer}=props
+
+          const [modal,setModel]=useState([])
+
+          
+          const [query,setQuery]=useState('')
+          const [filterData,setFilterData]=useState([])
+          
+          const showModel=(phone)=>{
+            let sum=0 
+            const result=data.filter((ele,i)=>{
+                if(ele.Phone===phone){
+                  return ele
+                }
+            }) 
+            setModel(result)
+          }
+          const findSum=()=>{
+            let sum=0
+            modal.forEach((ele)=>{
+              sum+=Number(ele.Amount)
+            })
+            return sum
+          }
+
+          const handleChange=(e)=>{
+                const queryString=e.target.value
+                setQuery(queryString)
+                const result=totalCustomer.filter((ele)=>{
+                  if(ele.Name.includes(queryString)|| ele.Phone.toString().includes(queryString)){
+                     return ele 
+                  }
+                })    
+                setFilterData(result)
+             }
+
+        return(
+          <div>
+             <nav className="navbar navbar-light bg-light">
+                  <div className="container-fluid">
+                     <a className="navbar-brand">Listing Customer </a>
+                     <input type="text" value={query} onChange={handleChange}/>
+                   
+                    </div>
+                </nav>
+               <table className="table">
+                <thead>
+                  <tr> 
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Mobile</th>
+                    <th scope="col">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  { filterData.length !==0 ?
+
+                     filterData.map((ele,i)=>{
+                        return (
+                          <tr key={i}>
+                              <td scope="row">{i+1}</td>
+                                <td>{ele.Name}</td>
+                                <td>{ele.Phone}</td>
+                                <td>
+                                        <a href="#"  
+                                          data-bs-toggle="modal"
+                                          data-bs-target="#staticBackdrop"
+                                          className="link-primary" 
+                                          onClick={()=>showModel(ele.Phone)}>
+                                          Show
+                                        </a>
+                                </td>
+                          </tr>
+                        )
+                      }) :
+                      totalCustomer.map((ele,i)=>{
+                        return (
+                          <tr key={i}>
+                              <td scope="row">{i+1}</td>
+                                <td>{ele.Name}</td>
+                                <td>{ele.Phone}</td>
+                                <td>
+                                        <a href="#"  
+                                          data-bs-toggle="modal"
+                                          data-bs-target="#staticBackdrop"
+                                          className="link-primary" 
+                                          onClick={()=>showModel(ele.Phone)}>
+                                          Show
+                                        </a>
+                                </td>
+                          </tr>
+                        )
+                        })
+                     }
+                    
+                </tbody>
+              </table>
+              
+              <div className="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                                
+                      <div className="modal-header">
+                          <span className="modal-title" id="staticBackdropLabel">{modal.length !==0 && <h1>{modal[0].Name}</h1>}</span>
+                          <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+
+
+                      <div className="modal-body">
+                        {modal.length !==0 &&(
+                          <div>
+                            <h2>Order Count-{modal.length}</h2>
+                            <h1>Total Amount-{
+                                 findSum()
+                                }  </h1>
+                          </div>
+                        )}
+                        <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                  {modal.map((ele,i)=>{
+                                    return (
+                                      <tr key={i}>
+                                        <td>{i+1}</td>
+                                        <td>{ele.Date}</td>
+                                        <td>{ele.Amount}</td>
+                                      </tr>
+                                    )
+                                  })}
+
+                                </tbody>
+                         </table>
+
+                      </div>
+
+                      <div className="modal-footer">
+                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                      </div>
+
+                    </div>  
+                </div>
+              </div>
+              <PaginationComponent/>
+          </div>
+
+        )
+      }
+
+      const CommonComponent=(props)=>{
+        const {text,length}=props
+        return(
+             <div>
+                <h2>{length}</h2>
+                <h1>{text}</h1>
+             </div>
+            )
+      }
+
+      const App = () => {
+        const [data, setData] = useState([]);
+        const [totalCustomer,setTotalCustomer]=useState([])
+        const [graphData,setGraphData]=useState([])
+        useEffect(()=>{
+            axios.get("./customer-data.json")
+                .then((res) => {
+                    setData(res.data);
+                })
+                .catch(() => {
+                    return alert("Your not using Live server");
+                });
+          },[])
+
+          //Total Amount
+          let res=0
+          const totalAmount=()=>{
+            data.forEach((ele)=>{
+              res+=ele.Amount
+            })
+          }
+          totalAmount()
+          
+           //Total Customers
+              useEffect(()=>{
+               let totalCustomer1 = data.reduce((acc,current)=>{
+                      const x=acc.find(item=>item.Phone===current.Phone)
+                      if(!x){
+                        return acc.concat([current])
+                      }else{
+                        return acc
+                      }
+                    },[])
+                  setTotalCustomer(totalCustomer1)
+            },[data])
+          
+           let Customer=Object.keys(totalCustomer).length
+              useEffect(()=>{
+                   const loadOrderAndCount=()=>{
+                        let res={}
+                        data.forEach((Ele)=>{
+                          if(res.hasOwnProperty(Ele.Phone)){
+                              res[Ele.Phone]++
+                            }else{
+                            res[Ele.Phone]=1
+                            }
+                        })
+                        let finalResult={}
+                          for(let key in res){
+                              let data=res[key]
+                              if(finalResult.hasOwnProperty(data)){
+                                  finalResult[data]++
+                              }else{
+                                        finalResult[data]=1
+                                 }
+                          }  
+                            let data1=[]
+                            let sum=0
+                            for(let key in finalResult){
+                                if(key<=4){
+                                    data1.push({'orders':key,'customer':finalResult[key]})
+                                }
+                                else if(key>=5){
+                                    sum+=finalResult[key]
+                                    }
+                              }
+                            data1.push({'orders':'5','customer':sum})
+                            
+                            
+                            let newArray=[...data1]
+                            setGraphData(newArray)
+                      }  
+                      loadOrderAndCount()
+              },[data])
+
+                     const data1=graphData.map((ele)=>{
+                        return {[ele.orders]:ele.customer}
+                      })
+                      let newObject=Object.assign({},...data1)
+                      let final_result=Object.entries(newObject)
+                     
+           return (
+                     <div >
+
+                            <div className="container" style={{marginTop:'10px'}}>
+                                <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+                                  <div className="container-fluid">
+                                    <a className="navbar-brand" href="#">Customer Dashboard</a>
+                                  </div>
+                                </nav>
+                              </div>
+
+                              <div className="container" style={{marginTop:'30px'}}>
+                                  <div className="row g-2">
+                                    <div className="col-4">
+                                      <div className="p-3 border bg-light">
+                                        <CommonComponent text="Order" length={data.length}/>
+                                      </div>
+                                    </div>
+                                    <div className="col-4">
+                                      <div className="p-3 border bg-light">
+                                          <CommonComponent text="Amount"    length={res}/>     
+                                      </div>
+                                    </div>
+                                    <div className="col-4">
+                                      <div className="p-3 border bg-light">
+                                          <CommonComponent text="Customers" length={Customer}/>
+                                    </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              <div className="container" style={{marginTop:'30px'}}>
+                                  <ListingCustomer data={data} totalCustomer={totalCustomer}/>
+                              </div>
+                              
+                            <div className="container" style={{marginTop:'10px'}}>
+                              <nav className="navbar navbar-light bg-light">
+                                  <div className="container-fluid">
+                                    <a className="navbar-brand"> Order Distribution </a>
+                                    </div>
+                                </nav>
+
+                              <div className="row" id="content" >
+                                    
+                                    <div className="col">
+                                          <ListofOrders graphData={graphData}/>
+                                    </div>
+
+                                    <div className="col"> 
+                                            <Graph graphData={graphData} final_result={final_result}/>
+                                    </div>
+                              
+                                </div>
+                            </div>     
+                     </div>
+               );
+      };
+      ReactDOM.render(<App />, rootHandle);
+    </script>
+  </body>
+</html>
